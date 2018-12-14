@@ -1,0 +1,65 @@
+电流无点击检测
+//		if(motor_value1<motorl_vol)
+//		{
+////			delay_ms(20);
+//			
+//			if(motor_value1<motorl_vol)
+//			{printf("motor_value1 = %d\n",motor_value1);
+//				printf("%d\n",motor1_adc_value[0]);
+//				printf("%d\n",motor1_adc_value[1]);
+//				printf("%d\n",motor1_adc_value[2]);
+//				printf("%d\n",motor1_adc_value[3]);
+//				printf("%d\n",motor1_adc_value[4]);
+//				
+//				if(motor1_error==0) 
+//				{
+//					anytime_stop=1;
+//					un_alarm_flag=1;    
+//					printf("BBB\n");
+//					motor1_error=1;
+//				}
+//			}
+//		}
+////		if(motor_value2<motorl_vol)
+//		{
+////			delay_ms(20);
+//			
+//			if(motor_value2<motorl_vol)
+//			{printf("motor_value2 = %d\n",motor_value2);
+//			printf("%d\n",motor2_adc_value[0]);
+//				printf("%d\n",motor2_adc_value[1]);
+//				printf("%d\n",motor2_adc_value[2]);
+//				printf("%d\n",motor2_adc_value[3]);
+//				printf("%d\n",motor2_adc_value[4]);
+//				if(motor2_error==0)
+//				{
+//					anytime_stop=1;
+//					un_alarm_flag=1;
+//					printf("CCC\n");
+//					motor2_error=1;
+//				}
+//			} 
+//		}
+////		if(motor_value3<motorl_vol)
+//		{
+////			delay_ms(20);
+//			
+//			if(motor_value3<motorl_vol)
+//			{printf("motor_value3 = %d\n",motor_value3);
+//			printf("%d\n",motor3_adc_value[0]);
+//				printf("%d\n",motor3_adc_value[1]);
+//				printf("%d\n",motor3_adc_value[2]);
+//				printf("%d\n",motor3_adc_value[3]);
+//				printf("%d\n",motor3_adc_value[4]);		
+//				if(motor3_error==0)
+//				{
+//					anytime_stop=1;
+//					un_alarm_flag=1;
+//					printf("DDD\n");
+//					motor3_error=1;
+//				}
+//			} 
+//		}
+
+//			if(((before_one_sec_vol1-dn_cur)>motor_value1||motor_value1>(before_one_sec_vol1+up_cur))||
+//			((before_one_sec_vol2-dn_cur)>motor_value2||motor_value2>(before_one_sec_vol2+up_cur)))
