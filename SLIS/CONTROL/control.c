@@ -92,7 +92,8 @@ void woke_mode_modbus_http_main(void)
 		static unsigned int work_interval = 0;//Post间隔计数
 		static unsigned int modbus_cmd_interval = 0;//modbus命令发送间隔计数
 		unsigned int work_flag = 0;//post大周期到来标识 0未到来 1到来
-		//unsigned int dealy = 0;//延迟
+		unsigned int all_post_count = 0;//所有post次数
+		unsigned int all_get_count = 0;//所有get次数
 		
 	//http_connect_count 一个周期内 http 连接次数
 	u8 http_connect_count = 0;
@@ -137,30 +138,30 @@ void woke_mode_modbus_http_main(void)
 						//DEBUG("\r\nhttp post data %d server1 %d server2 %d \r\n",modbus_http_post_len,para_value.link1.connect_type,para_value.link2.connect_type);
 						//判断是否需要执行HTTP POST请求
 						if(modbus_http_post_len){//接收modbus查询命令返回的数据不为空
-							
-								//DEBUG("\r\nPOST Code:%d\r\n",http_post(para_value.link1, para_value.modbus_http_post_para, modbus_http_post_buff, modbus_http_post_len,http_connect_count));
+							modbus_get_flog=0;//修改get操作标识
+							all_post_count++;
+							DEBUG(",all:%d,this code:%d\r\n",all_post_count,
+							http_post(para_value.link1, para_value.modbus_http_post_para, modbus_http_post_buff, modbus_http_post_len,http_connect_count));
 								/**
 								清理HTTP POST 缓冲区，不可使用HTTP GET中的（清理HTTP POST 缓冲区）操作替换。
 								因为HTTP GET 行为并不一定会发生
 								**/
 								modbus_http_post_len = 0;
 								memset(modbus_http_post_buff, 0, Post_Buffer_Length);
-								delay_ms(5000);
-							/**dealy = time_get_ms();
-								while(time_diff_ms(dealy) < 3000);**/
+								delay_ms(2000);
 						}
 							//清理接收的modbus查询命令返回的数据
 							modbus_http_post_len = 0;
 							memset(modbus_http_post_buff, 0, Post_Buffer_Length);
 						
 						//执行get请求
-						
-							modbus_get_flog = 1;
+							all_get_count++;
+							modbus_get_flog = 1;//修改get操作标识，防止uart2收到的数据放入modbus_http_post_buff;
 							int code = http_get(para_value.link2, para_value.modbus_http_get_para, para_value.modbus_qry_get_para.buff);
-							DEBUG("\r\nGET Code:%d\r\n",code);
+							DEBUG(",all:%d,this code:%d\r\n",all_get_count,code);
 							if(!code)
 							{
-								DEBUG("\r\nhttp_get_rx_len:%d\r\n",http_get_rx_len);
+								DEBUG("http_get_rx_len:%d\r\n",http_get_rx_len);
 								modbus_http_get_send(http_get_buff, http_get_rx_len);
 							}
 							modbus_get_flog = 0;
@@ -168,9 +169,9 @@ void woke_mode_modbus_http_main(void)
 					}
 					else{
 						if(para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].len > 0){//命令长度有效发送命令
-							/**usart_send_str(HOSTIF_USART, 
+							usart_send_str(HOSTIF_USART, 
 								para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].buff, 
-								para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].len);**/
+								para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].len);
 								post_action_send_modbus_commands_Index++;//命令计数++
 						}else{
 							post_action_send_modbus_commands_Index = Modbus_Commands_Length;//遇到空命令直接跳过
