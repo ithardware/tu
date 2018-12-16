@@ -6,7 +6,7 @@
 #include "control.h"
 
 #define TEST_INIT_GPRS_1 1
-#define TEST_INIT_GPRS_2 0
+#define TEST_INIT_GPRS_GET 1
 /**
 	*  HTTP请求返回值定义
 */
@@ -632,7 +632,7 @@ int init_gprs(void)
     }
     return 0;**/
 //}
-
+#if 0
 //重启sim800c，如果上次重启时间超过一分钟
 void reset_sim800c(){
 		if(time_diff_ms(open_gprs_cgatt_interval)>60000){
@@ -642,17 +642,40 @@ void reset_sim800c(){
 				DEBUG("\r\nreset sim800c\r\n");
 		}
 }
+#endif
+#if TEST_INIT_GPRS_GET
+void reset_sim800c(){
+		sim900a_send_data_ack("AT+CFUN=0\r\n", 12, "OK", 1000);
+		sim900a_send_data_ack("AT+CFUN=1\r\n", 12, "OK", 1000);
+		DEBUG("\r\nreset sim800c\r\n");
+}
+#endif
 
 /**
 初始化过程中总是开启IP承载
 **/
-int init_gprs2(void)
+int init_gprs(void)
 {
 		#if TEST_INIT_GPRS_1
-		//sim900a_send_data_ack("AT+CGATT?\r\n", 11, "+CGATT", 100);
-		sim900a_send_data_ack("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n", 31, "\r\n", 100);
-		sim900a_send_data_ack("AT+SAPBR=3,1,\"APN\",\"CMNET\"\r\n", 28, "\r\n", 100);
-		sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100);
+		u8 flag = 5;
+		while(flag)
+		{
+			if(sim900a_send_data_ack("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n", 31, "\r\n", 100))
+			{
+					return 1;
+			}
+			if(sim900a_send_data_ack("AT+SAPBR=3,1,\"APN\",\"CMNET\"\r\n", 28, "\r\n", 100))
+			{
+					return 2;
+			}
+			if(sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 200)){
+					reset_sim800c();
+					flag--;
+			}else{
+					return 0;
+			}
+			return 3;
+	}
 		//sim900a_send_data_ack("AT+SAPBR=2,1\r\n",14,"+SAPBR",100);
 		//sim900a_send_data_ack("AT+SAPBR=0,1\r\n", 14, "OK", 100);
 		return 0;
@@ -719,15 +742,15 @@ void init_http_service(){
 /**
 关闭释放sim800的http服务
 **/
-void release_http_service(){
+void close_http_service(){
 	//只要执行完 http gett 工作必定关闭http服务与承载，因为http get是最后一个请求
     sim900a_send_data_ack("AT+HTTPTERM\r\n", 13, "OK", 100);//关闭HTTP服务	
 }
 /**
 关闭释放sim800的数据连接
 **/
-void release_gprs_bearer(){
-	delay_ms(200);
+void close_gprs(){
+	delay_ms(100);
 	sim900a_send_data_ack("AT+SAPBR=0,1\r\n", 14, "OK", 100);//关闭HTTP承载
   gprs_bearer_closed = 1;
 }
@@ -748,21 +771,15 @@ void release_gprs_bearer_and_http_service(){
 //修改
 int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
 {
-		if (link.connect_type)//0为http连接，非0为其他方式
-    {
-        return HTTP_STATUS_ERROR_LINK_NONSUPPORT;   //	连接不受支持
-    }
-		if (init_gprs2())
-    {
-        return HTTP_STATUS_ERROR_GPRS_INIT;//init gprs失败
-    }
+		
 		#if TEST_INIT_GPRS_1
 		init_http_service();
 		int i = 0, len = 0;
     int status_code = 0;
     int http_rx_len = 0;
     memset(http_buff, '\0', HTTP_BUFF_LEN);
-
+		
+		sim900a_send_data_ack("AT+HTTPPARA=\"CID\",1\r\n", 21, "OK", 100);
     if ((u32)in_data == (u32)(para_value.modbus_qry_get_para.buff))
     {
         len = sprintf((char*)http_buff, "AT+HTTPPARA=\"URL\",\"%s:%d%s\"\r\n", link.ip_addr, link.port, http_para.url);
@@ -799,11 +816,12 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
             //这里不发送，等待请求结果主动回应
             if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 1000))
             {
-                //DEBUG("content:%s\r\n",USART3_RX_BUF);
+                DEBUG("content:%s\r\n",USART3_RX_BUF);
                 status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_TIMEOUT;//请求超时无法获取数据
             }
             else
             {
+							DEBUG("content:%s\r\n",USART3_RX_BUF);
                 //获取服务器返回状态码
                 status_code = (USART3_RX_BUF[17] - 0x30) * 100 + (USART3_RX_BUF[18] - 0x30) * 10 + (USART3_RX_BUF[19] - 0x30);
                 if (200 == status_code)// 服务器返回错误状态码
@@ -848,7 +866,7 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
             }
         }
     }
-    release_gprs_bearer_and_http_service();
+    close_http_service();
 		if(status_code){
 				http_get_fail_count++;
 				
@@ -968,15 +986,6 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
 
 int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len, u8 http_connect_count)
 {
-    if (link.connect_type)//0为http连接，非0为其他方式
-    {
-        return HTTP_STATUS_ERROR_LINK_NONSUPPORT;   //	连接不受支持
-    }
-
-    if (init_gprs2())
-    {
-        return HTTP_STATUS_ERROR_GPRS_INIT;//init gprs失败
-    }
     init_http_service();
 
 		#if TEST_INIT_GPRS_1
@@ -1047,7 +1056,7 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len, u8 http
 
     }
 
-    release_gprs_bearer_and_http_service();
+    close_http_service();
 		if(status_code){
 				http_post_fail_count++;
 		}
