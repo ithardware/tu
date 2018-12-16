@@ -1,12 +1,12 @@
 #include "SIM800C.h"
-//#include "led.h"
 #include "string.h"
 #include "timer.h"
-//#include "crc32.h"
 #include "delay.h"
 #include "usart.h"
 #include "control.h"
 
+#define TEST_INIT_GPRS_1 1
+#define TEST_INIT_GPRS_2 0
 /**
 	*  HTTP请求返回值定义
 */
@@ -28,7 +28,15 @@
 //修改
 u8 gprs_bearer_closed = 1; //gprs承载是否关闭标示
 unsigned int open_gprs_cgatt_interval = 0;//重启sim800c计数器
-unsigned int open_gprs_bearer_count = 0;//打开ip承载的次数
+unsigned int open_gprs_bearer_success_count = 0;//打开ip承载成功次数
+unsigned int open_gprs_bearer_fail_count = 0;//打开ip承载失败次数
+
+
+unsigned int http_get_success_count = 0;//http get 请求成功次数
+unsigned int http_get_fail_count = 0;//http get 请求失败次数
+
+unsigned int http_post_success_count = 0;//http post 请求成功次数
+unsigned int http_post_fail_count = 0;//http post 请求失败次数
 
 u8 tcp_udp_rx_data_flog = 0;
 u8 first_tcp_udp_connect_flog = 0;
@@ -556,6 +564,7 @@ u8 off_line(void)
 初始化过程中根据是否关闭标识进行IP承载
 **/
 //修改
+/**
 int init_gprs(void)
 {
     sim900a_send_data_ack("AT+CGATT?\r\n", 11, "+CGATT", 200);//检测GPRS是否上线
@@ -597,7 +606,7 @@ int init_gprs(void)
 								DEBUG("\r\nreset sim800c\r\n");
 						}
 						return 1;
-				}
+				}**/
 	/**
         gprs_bearer_closed = 1;
 				DEBUG("reline\r\n");
@@ -622,7 +631,7 @@ int init_gprs(void)
         gprs_bearer_closed = 0;
     }
     return 0;**/
-}
+//}
 
 //重启sim800c，如果上次重启时间超过一分钟
 void reset_sim800c(){
@@ -639,7 +648,17 @@ void reset_sim800c(){
 **/
 int init_gprs2(void)
 {
-    sim900a_send_data_ack("AT+CGATT?\r\n", 11, "+CGATT", 200);//检测GPRS是否上线
+		#if TEST_INIT_GPRS_1
+		//sim900a_send_data_ack("AT+CGATT?\r\n", 11, "+CGATT", 100);
+		sim900a_send_data_ack("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n", 31, "\r\n", 100);
+		sim900a_send_data_ack("AT+SAPBR=3,1,\"APN\",\"CMNET\"\r\n", 28, "\r\n", 100);
+		sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100);
+		sim900a_send_data_ack("AT+SAPBR=2,1\r\n",14,"+SAPBR",100);
+		//sim900a_send_data_ack("AT+SAPBR=0,1\r\n", 14, "OK", 100);
+		return 0;
+		#endif
+		#if 0
+				sim900a_send_data_ack("AT+CGATT?\r\n", 11, "+CGATT", 200);//检测GPRS是否上线
     
 				if(USART3_RX_BUF[10] == 0x31)//已附着gprs
 				{
@@ -653,30 +672,49 @@ int init_gprs2(void)
 						{
 								return 3;
 						}
-						//sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100);
+						u8 flag = 0;
 						if (sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100))
 						{
+								open_gprs_bearer_fail_count++;
 								if(time_diff_ms(open_gprs_cgatt_interval)>60000){
-									DEBUG("\r\nSAPBR is open fail and reset sim800\r\n");
+									DEBUG("\r\nbearer is open fail reset sim800\r\n");
 									reset_sim800c();
 									open_gprs_cgatt_interval = time_get_ms();
 								}
-								return 4;
+								flag = 4;
 						}
-						open_gprs_bearer_count ++;
-						DEBUG("\r\nSAPBR open success %d\r\n",open_gprs_bearer_count);
-						return 0;
+						else
+						{
+								open_gprs_bearer_success_count++;
+								flag = 0;
+						}
+						DEBUG("\r\nbearer open fail %d,success %d\r\n",open_gprs_bearer_fail_count,open_gprs_bearer_success_count);
+						return flag;
 				}
 				else
 				{
 						//重启sim800c，如果上次重启时间超过一分钟
 						if(time_diff_ms(open_gprs_cgatt_interval)>60000){
-								DEBUG("\r\ngprs cgatt fail and reset sim800\r\n");
+								DEBUG("\r\ngprs cgatt fail reset sim800\r\n");
 								reset_sim800c();
 								open_gprs_cgatt_interval = time_get_ms();
 						}
 						return 1;
 				}
+				#endif
+}
+
+void init_http_service(){
+		u8 flag = 0;
+		while(1){
+			flag = sim900a_send_data_ack("AT+HTTPINIT\r\n", 13, "OK", 100);
+			if(flag){
+					sim900a_send_data_ack("AT+HTTPTERM\r\n", 13, "OK", 100);
+			}
+			else{
+					break;
+			}
+		}
 }
 /**
 关闭释放sim800的http服务
@@ -710,34 +748,21 @@ void release_gprs_bearer_and_http_service(){
 //修改
 int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
 {
-    if (link.connect_type)//0为http连接，非0为其他方式
+		if (link.connect_type)//0为http连接，非0为其他方式
     {
         return HTTP_STATUS_ERROR_LINK_NONSUPPORT;   //	连接不受支持
     }
-    
-    if (init_gprs2())
+		if (init_gprs2())
     {
         return HTTP_STATUS_ERROR_GPRS_INIT;//init gprs失败
     }
-		
-		//sim900a_send_data_ack("AT+HTTPTERM\r\n",13,"OK",100);
-    
-    /**if(sim900a_send_data_ack("AT+HTTPTERM\r\n",13,"OK",100))//关闭HTTP服务	
-    {
-			DEBUG("\r\nClose %s", USART3_RX_BUF);
-        return 12;
-    }**/
-		
-    if (sim900a_send_data_ack("AT+HTTPINIT\r\n", 13, "OK", 100))
-    {
-				release_gprs_bearer();//释放gprs数据连接
-        return HTTP_STATUS_ERROR_HTTP_INIT; //HTTP 连接初始化失败
-    }
+		#if TEST_INIT_GPRS_1
+		init_http_service();
 		int i = 0, len = 0;
     int status_code = 0;
     int http_rx_len = 0;
     memset(http_buff, '\0', HTTP_BUFF_LEN);
-		
+
     if ((u32)in_data == (u32)(para_value.modbus_qry_get_para.buff))
     {
         len = sprintf((char*)http_buff, "AT+HTTPPARA=\"URL\",\"%s:%d%s\"\r\n", link.ip_addr, link.port, http_para.url);
@@ -752,86 +777,191 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
     {
         status_code = HTTP_STATUS_ERROR_HTTP_URL_SETTING;//设置请求地址及参数信息出错
     }
-		else
-		{
-				if (strlen((char*)http_para.head))
-				{
-						memset(http_buff, '\0', HTTP_BUFF_LEN);
-						len = sprintf((char*)http_buff, "AT+HTTPPARA=\"USERDATA\",\"%s\"\r\n", http_para.head);
-						//DEBUG("%s\r\n",http_buff);
-						if (sim900a_send_data_ack(http_buff, len, "OK", 100))
-						{
-								status_code = HTTP_STATUS_ERROR_HTTP_HEADER_SETTING;//设置HTTP Hader参数信息出错
-						}
-					}
-						
-									if (sim900a_send_data_ack("AT+HTTPACTION=0\r\n", 17, "OK", 1000))//等待10s中GET服务器数据,但是获取数据可能存在延时
-									{
-											status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_SEND;//get请求错误
-									}
-									else
-									{
-											//这里不发送，等待请求结果主动回应
-											if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 1000))
-											{
-													//DEBUG("content:%s\r\n",USART3_RX_BUF);
-													status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_TIMEOUT;//请求超时无法获取数据
-											}
-											else
-											{
-													//获取服务器返回状态码
-													status_code = (USART3_RX_BUF[17] - 0x30) * 100 + (USART3_RX_BUF[18] - 0x30) * 10 + (USART3_RX_BUF[19] - 0x30);
-													if (200 != status_code)// 服务器返回错误状态码
-													{
-															//返回前必需关闭释放底层服务器，为下次请求做好准备
-															release_gprs_bearer_and_http_service();
-															return status_code;//服务器返回错误状态
-													}
-													else
-													{
-															status_code = 0;//在成功请求之后，重置status_code
-														//读取http的body
-														if (sim900a_send_data_ack("AT+HTTPREAD\r\n", 13, "+HTTPREAD", 300))
-														{
-																status_code = HTTP_STATUS_ERROR_READ_HTTP_RESPONSE_BODY8;//读取GET下来的body数据失败
-														}
-														else
-														{
-															http_rx_len = 0;
-															while (1)
-															{
-																	if (USART3_RX_BUF[13 + i] == 0x0d)
-																	{
-																			break;
-																	}
-																	else
-																	{
-																			if (USART3_RX_BUF[13 + i] == ' ')
-																			{
-																					i++;
-																			}
-																			else
-																			{
-																					http_rx_len = http_rx_len * 10 + (USART3_RX_BUF[13 + i] - 0x30);
-																			}
-																	}
-																	i++;
-															}
+    else
+    {
+        if (strlen((char*)http_para.head))
+        {
+            memset(http_buff, '\0', HTTP_BUFF_LEN);
+            len = sprintf((char*)http_buff, "AT+HTTPPARA=\"USERDATA\",\"%s\"\r\n", http_para.head);
+            //DEBUG("%s\r\n",http_buff);
+            if (sim900a_send_data_ack(http_buff, len, "OK", 100))
+            {
+                status_code = HTTP_STATUS_ERROR_HTTP_HEADER_SETTING;//设置HTTP Hader参数信息出错
+            }
+        }
 
-															//usart_send_str(HOSTIF_USART, &USART3_RX_BUF[i+15], http_rx_len);			
-															memcpy((char*)http_get_buff, (char*)(&USART3_RX_BUF[i + 15]), http_rx_len);
-															http_get_rx_len = http_rx_len;
-															
-															status_code = HTTP_STATUS_SUCCESS;
-														}
-													}
-											}
-									}
-						
-			
+        if (sim900a_send_data_ack("AT+HTTPACTION=0\r\n", 17, "OK", 1000))//等待10s中GET服务器数据,但是获取数据可能存在延时
+        {
+            status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_SEND;//get请求错误
+        }
+        else
+        {
+            //这里不发送，等待请求结果主动回应
+            if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 1000))
+            {
+                //DEBUG("content:%s\r\n",USART3_RX_BUF);
+                status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_TIMEOUT;//请求超时无法获取数据
+            }
+            else
+            {
+                //获取服务器返回状态码
+                status_code = (USART3_RX_BUF[17] - 0x30) * 100 + (USART3_RX_BUF[18] - 0x30) * 10 + (USART3_RX_BUF[19] - 0x30);
+                if (200 == status_code)// 服务器返回错误状态码
+                {
+                    status_code = 0;//在成功请求之后，重置status_code
+                    http_get_success_count++;
+                    //读取http的body
+                    if (sim900a_send_data_ack("AT+HTTPREAD\r\n", 13, "+HTTPREAD", 300))
+                    {
+                        status_code = HTTP_STATUS_ERROR_READ_HTTP_RESPONSE_BODY8;//读取GET下来的body数据失败
+                    }
+                    else
+                    {
+                        http_rx_len = 0;
+                        while (1)
+                        {
+                            if (USART3_RX_BUF[13 + i] == 0x0d)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                if (USART3_RX_BUF[13 + i] == ' ')
+                                {
+                                    i++;
+                                }
+                                else
+                                {
+                                    http_rx_len = http_rx_len * 10 + (USART3_RX_BUF[13 + i] - 0x30);
+                                }
+                            }
+                            i++;
+                        }
+
+                        //usart_send_str(HOSTIF_USART, &USART3_RX_BUF[i+15], http_rx_len);			
+                        memcpy((char*)http_get_buff, (char*)(&USART3_RX_BUF[i + 15]), http_rx_len);
+                        http_get_rx_len = http_rx_len;
+
+                        status_code = HTTP_STATUS_SUCCESS;
+                        DEBUG("http get success count %d,fail count:%d", http_get_success_count, http_get_fail_count);
+
+                    }
+                }
+            }
+        }
+    }
+    release_gprs_bearer_and_http_service();
+		if(status_code){
+				DEBUG("http get fail count %d,success count:%d", http_get_success_count, http_get_fail_count);
 		}
-		release_gprs_bearer_and_http_service();
-		return status_code;
+    return status_code;
+		#endif
+		#if 0
+    release_http_service();
+
+    if (sim900a_send_data_ack("AT+HTTPINIT\r\n", 13, "OK", 100))
+    {
+        release_gprs_bearer();//释放gprs数据连接
+        return HTTP_STATUS_ERROR_HTTP_INIT; //HTTP 连接初始化失败
+    }
+    int i = 0, len = 0;
+    int status_code = 0;
+    int http_rx_len = 0;
+    memset(http_buff, '\0', HTTP_BUFF_LEN);
+
+    if ((u32)in_data == (u32)(para_value.modbus_qry_get_para.buff))
+    {
+        len = sprintf((char*)http_buff, "AT+HTTPPARA=\"URL\",\"%s:%d%s\"\r\n", link.ip_addr, link.port, http_para.url);
+    }
+    else
+    {
+        len = sprintf((char*)http_buff, "AT+HTTPPARA=\"URL\",\"%s:%d%s?%s\"\r\n", link.ip_addr, link.port, http_para.url, in_data);
+    }
+
+    //从此处之后的操作无论是否成功，全部需要 关闭释放sim800的数据连接与http服务
+    if (sim900a_send_data_ack(http_buff, len, "OK", 100))
+    {
+        status_code = HTTP_STATUS_ERROR_HTTP_URL_SETTING;//设置请求地址及参数信息出错
+    }
+    else
+    {
+        if (strlen((char*)http_para.head))
+        {
+            memset(http_buff, '\0', HTTP_BUFF_LEN);
+            len = sprintf((char*)http_buff, "AT+HTTPPARA=\"USERDATA\",\"%s\"\r\n", http_para.head);
+            //DEBUG("%s\r\n",http_buff);
+            if (sim900a_send_data_ack(http_buff, len, "OK", 100))
+            {
+                status_code = HTTP_STATUS_ERROR_HTTP_HEADER_SETTING;//设置HTTP Hader参数信息出错
+            }
+        }
+
+        if (sim900a_send_data_ack("AT+HTTPACTION=0\r\n", 17, "OK", 1000))//等待10s中GET服务器数据,但是获取数据可能存在延时
+        {
+            status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_SEND;//get请求错误
+        }
+        else
+        {
+            //这里不发送，等待请求结果主动回应
+            if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 1000))
+            {
+                //DEBUG("content:%s\r\n",USART3_RX_BUF);
+                status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_TIMEOUT;//请求超时无法获取数据
+            }
+            else
+            {
+                //获取服务器返回状态码
+                status_code = (USART3_RX_BUF[17] - 0x30) * 100 + (USART3_RX_BUF[18] - 0x30) * 10 + (USART3_RX_BUF[19] - 0x30);
+                if (200 == status_code)// 服务器返回错误状态码
+                {
+                    status_code = 0;//在成功请求之后，重置status_code
+                    http_get_success_count++;
+                    //读取http的body
+                    if (sim900a_send_data_ack("AT+HTTPREAD\r\n", 13, "+HTTPREAD", 300))
+                    {
+                        status_code = HTTP_STATUS_ERROR_READ_HTTP_RESPONSE_BODY8;//读取GET下来的body数据失败
+                    }
+                    else
+                    {
+                        http_rx_len = 0;
+                        while (1)
+                        {
+                            if (USART3_RX_BUF[13 + i] == 0x0d)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                if (USART3_RX_BUF[13 + i] == ' ')
+                                {
+                                    i++;
+                                }
+                                else
+                                {
+                                    http_rx_len = http_rx_len * 10 + (USART3_RX_BUF[13 + i] - 0x30);
+                                }
+                            }
+                            i++;
+                        }
+
+                        //usart_send_str(HOSTIF_USART, &USART3_RX_BUF[i+15], http_rx_len);			
+                        memcpy((char*)http_get_buff, (char*)(&USART3_RX_BUF[i + 15]), http_rx_len);
+                        http_get_rx_len = http_rx_len;
+
+                        status_code = HTTP_STATUS_SUCCESS;
+                        DEBUG("http get success count %d,fail count:%d", http_get_success_count, http_get_fail_count);
+
+                    }
+                }
+            }
+        }
+    }
+    release_gprs_bearer_and_http_service();
+		if(status_code){
+				DEBUG("http get fail count %d,success count:%d", http_get_success_count, http_get_fail_count);
+		}
+    return status_code;
+		#endif
 }
 
 
@@ -846,6 +976,7 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len, u8 http
     {
         return HTTP_STATUS_ERROR_GPRS_INIT;//init gprs失败
     }
+		release_http_service();
 		
     if (sim900a_send_data_ack("AT+HTTPINIT\r\n", 13, "OK", 100))
     {
@@ -908,7 +1039,7 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len, u8 http
 														}
 														else
 														{
-																if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 200))
+																if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 1000))
 																{
 																		status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_TIMEOUT;//无法获取数据
 																}

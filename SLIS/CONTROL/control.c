@@ -92,7 +92,7 @@ void woke_mode_modbus_http_main(void)
 		static unsigned int work_interval = 0;//Post间隔计数
 		static unsigned int modbus_cmd_interval = 0;//modbus命令发送间隔计数
 		unsigned int work_flag = 0;//post大周期到来标识 0未到来 1到来
-		unsigned int dealy = 0;//延迟
+		//unsigned int dealy = 0;//延迟
 		
 	//http_connect_count 一个周期内 http 连接次数
 	u8 http_connect_count = 0;
@@ -138,7 +138,7 @@ void woke_mode_modbus_http_main(void)
 						//判断是否需要执行HTTP POST请求
 						if(modbus_http_post_len){//接收modbus查询命令返回的数据不为空
 							
-								DEBUG("\r\nPOST Code:%d\r\n",http_post(para_value.link1, para_value.modbus_http_post_para, modbus_http_post_buff, modbus_http_post_len,http_connect_count));
+								//DEBUG("\r\nPOST Code:%d\r\n",http_post(para_value.link1, para_value.modbus_http_post_para, modbus_http_post_buff, modbus_http_post_len,http_connect_count));
 								/**
 								清理HTTP POST 缓冲区，不可使用HTTP GET中的（清理HTTP POST 缓冲区）操作替换。
 								因为HTTP GET 行为并不一定会发生
@@ -168,12 +168,9 @@ void woke_mode_modbus_http_main(void)
 					}
 					else{
 						if(para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].len > 0){//命令长度有效发送命令
-							//if(0 == post_action_send_modbus_commands_Index){//在发送第一条Query Modbus命令时延迟100ms,防止Get Modubs命令返回值与该命令返回值重叠
-							//	delay_ms(200);
-							//}
-							usart_send_str(HOSTIF_USART, 
+							/**usart_send_str(HOSTIF_USART, 
 								para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].buff, 
-								para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].len);
+								para_value.modbus_qry_post_para[post_action_send_modbus_commands_Index].len);**/
 								post_action_send_modbus_commands_Index++;//命令计数++
 						}else{
 							post_action_send_modbus_commands_Index = Modbus_Commands_Length;//遇到空命令直接跳过
