@@ -67,15 +67,6 @@ int main(void)
   read_para_from_flash();
 	uart2_init(para_value.usart_para);	 
 
-	//IWDG_Init(6,625);    //与分频数为256,重载值为625,溢出时间为4s	
-
-	
-	//define_para_value();
-	
-	//KEY_Init(); 
-
-	//ADC1_Init();
-	//ADC_DMA();
 	
     DEBUG("SAVE_DATA len is %d\r\n", sizeof(SAVE_DATA));
     DEBUG("System is start!!!!!\r\n");
@@ -88,18 +79,9 @@ int main(void)
 			//host_receive_packet();
 			//SIM8XX_User_Receive();
 			
-			
 			if(para_value.word_mode == WOKE_MODE_AT)
 			{
 					woke_mode_at_main();
-			}
-			else if(para_value.word_mode == WOKE_MODE_TS)
-			{
-					woke_mode_ts_main();
-			}
-			else if(para_value.word_mode == WOKE_MODE_HTTP)
-			{
-					woke_mode_http_main();
 			}
 			else if(para_value.word_mode == WOKE_MODE_MODBUS_HTTP)
 			{
