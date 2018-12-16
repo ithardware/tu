@@ -639,11 +639,12 @@ int init_gprs2(void)
 						{
 								return 3;
 						}
-						if (sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100))
-						{
-								DEBUG("\r\nSAPBR is open fail\r\n");
-								return 4;
-						}
+						sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100);
+						//if (sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100))
+						//{
+						//		DEBUG("\r\nSAPBR is open fail\r\n");
+						//		return 4;
+						//}
 						open_gprs_bearer_count ++;
 						DEBUG("\r\nSAPBR open success %d\r\n",open_gprs_bearer_count);
 						return 0;
