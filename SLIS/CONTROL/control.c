@@ -145,8 +145,9 @@ void woke_mode_modbus_http_main(void)
 								**/
 								modbus_http_post_len = 0;
 								memset(modbus_http_post_buff, 0, Post_Buffer_Length);
-								dealy = time_get_ms();
-								while(time_diff_ms(dealy) < 3000);
+								delay_ms(5000);
+							/**dealy = time_get_ms();
+								while(time_diff_ms(dealy) < 3000);**/
 						}
 							//清理接收的modbus查询命令返回的数据
 							modbus_http_post_len = 0;

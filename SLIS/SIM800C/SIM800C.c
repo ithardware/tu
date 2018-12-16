@@ -842,7 +842,7 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len, u8 http
         return HTTP_STATUS_ERROR_LINK_NONSUPPORT;   //	连接不受支持
     }
     
-    if (init_gprs())
+    if (init_gprs2())
     {
         return HTTP_STATUS_ERROR_GPRS_INIT;//init gprs失败
     }
