@@ -119,6 +119,14 @@ void woke_mode_modbus_http_main(void)
 								all_init_gprs_count++;
 								if(!init_gprs())//打开grps承载失败
 								{
+										if(!para_value.link1.connect_type)
+										{
+												all_post_count++;
+												modbus_get_flog = 0;//修改get操作标识，防止uart2收到的数据放入modbus_http_post_buff;
+												int code = http_post(para_value.link1, para_value.modbus_http_post_para, modbus_http_post_buff, 1749);
+												DEBUG(",all:%d,this code:%d",all_post_count,code);
+										}
+										
 										if(!para_value.link2.connect_type)
 										{
 												all_get_count++;
@@ -132,7 +140,7 @@ void woke_mode_modbus_http_main(void)
 												}
 												else
 												{
-														DEBUG(",error code:%d\r\n",code);
+														DEBUG("\r\n");
 												}
 												modbus_get_flog = 0;
 										}

@@ -56,8 +56,8 @@ extern u8 off_line(void);
 extern int init_gprs(void);
 extern void close_gprs(void);
 extern int http_get(LINK_PARA link, HTTP_PARA http_para, u8 *in_data);
-//extern int http_post(LINK_PARA link, HTTP_PARA http_para, u8 *in_data, u16 len);
-extern int http_post(LINK_PARA link, HTTP_PARA http_para, u8 *in_data, u16 len,u8 http_connect_count);
+extern int http_post(LINK_PARA link, HTTP_PARA http_para, u8 *in_data, u16 len);
+//extern int http_post(LINK_PARA link, HTTP_PARA http_para, u8 *in_data, u16 len,u8 http_connect_count);
 
 
 

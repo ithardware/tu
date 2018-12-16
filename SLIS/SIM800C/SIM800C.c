@@ -648,6 +648,7 @@ void reset_sim800c(){
 		sim900a_send_data_ack("AT+CFUN=0\r\n", 12, "OK", 1000);
 		sim900a_send_data_ack("AT+CFUN=1\r\n", 12, "OK", 1000);
 		DEBUG("\r\nreset sim800c\r\n");
+		delay_ms(5000);
 }
 #endif
 
@@ -753,16 +754,6 @@ void close_gprs(){
 	delay_ms(100);
 	sim900a_send_data_ack("AT+SAPBR=0,1\r\n", 14, "OK", 100);//关闭HTTP承载
   gprs_bearer_closed = 1;
-}
-/**
-关闭释放sim800的数据连接与http服务
-**/
-void release_gprs_bearer_and_http_service(){
-	//只要执行完 http gett 工作必定关闭http服务与承载，因为http get是最后一个请求
-    sim900a_send_data_ack("AT+HTTPTERM\r\n", 13, "OK", 100);//关闭HTTP服务	
-    delay_ms(200);
-    sim900a_send_data_ack("AT+SAPBR=0,1\r\n", 14, "OK", 100);//关闭HTTP承载
-    gprs_bearer_closed = 1;
 }
 
 /**
@@ -984,7 +975,7 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
 
 
 
-int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len, u8 http_connect_count)
+int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len)
 {
     init_http_service();
 
@@ -992,7 +983,8 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len, u8 http
     int status_code = 0;
     memset(http_buff, '\0', HTTP_BUFF_LEN);
 
-
+		sim900a_send_data_ack("AT+HTTPPARA=\"CID\",1\r\n", 21, "OK", 100);
+	
     int xlen = sprintf((char*)http_buff, "AT+HTTPPARA=\"URL\",\"%s:%d%s\"\r\n", link.ip_addr, link.port, http_para.url);
 
     if (sim900a_send_data_ack(http_buff, xlen, "OK", 100))

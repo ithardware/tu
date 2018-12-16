@@ -13,7 +13,7 @@ u16 host_rx_len = 0;
 u8 host_tx_buff[HOST_TX_BUFF_LEN];
 
 u8 dtu_hw_version[] = "V1.2";
-u8 dtu_sw_version[] = "V2.1.3 Test GET ONLY";
+u8 dtu_sw_version[] = "V2.1.3 Test GET AND POST";
 
 
 APN_GATEWAT temp_apn_para;
@@ -1692,7 +1692,7 @@ u8 test_gsm(u8 cmd)
 
 						break;
 				case 3:
-            res = http_post(para_value.link1, para_value.http_para, "act=get_token", 15,1);
+            res = http_post(para_value.link1, para_value.http_para, "act=get_token", 15);
 						break;
 				case 4:
             res = sprintf((char *)host_tx_buff,"test gsm %d  \\r   \\n    \r\n",temp[1]);
@@ -1940,7 +1940,7 @@ void host_receive_packet(void)
 					  host_rx_buff[host_rx_len-1] = '\0';
 			        if(para_value.http_para.type == 0) //post
 					  {
-					      http_post(para_value.link1, para_value.http_para, host_rx_buff, sizeof(host_rx_buff),1);
+					      http_post(para_value.link1, para_value.http_para, host_rx_buff, sizeof(host_rx_buff));
 					  }
 					  else if(para_value.http_para.type == 1) //get
 					  {
