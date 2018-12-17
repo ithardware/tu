@@ -13,7 +13,7 @@ u16 host_rx_len = 0;
 u8 host_tx_buff[HOST_TX_BUFF_LEN];
 
 u8 dtu_hw_version[] = "V1.2";
-u8 dtu_sw_version[] = "V2.1.4 Check Modbus/Post/Get";
+u8 dtu_sw_version[] = "V2.1.5 modbus cmds 20 beta";
 
 
 APN_GATEWAT temp_apn_para;
@@ -293,7 +293,7 @@ void quert_cmd_process(u8 cmd, u8 *para)
 								    break;
 								}
 						}
-						if(temp[0] < 16)
+						if(temp[0] < Modbus_Commands_Length)
 						{
 						    res = sprintf((char *)host_tx_buff,"+QRYPOST:%d,", temp[0]);
 								for(i=0; i<para_value.modbus_qry_post_para[temp[0]].len;i++)
@@ -1305,7 +1305,7 @@ void set_cmd_process(u8 cmd, u8 *para)
 						}
 						para++;
 						
-						if(temp[0] >=16)
+						if(temp[0] >= Modbus_Commands_Length)
 						{
 						    res = -1;
 						}

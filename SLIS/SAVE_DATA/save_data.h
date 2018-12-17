@@ -4,6 +4,7 @@
 #include "usart.h"	
 
 #define SAVE_PARA_ADDR  0X0800e000		//设置FLASH 保存地址(必须为偶数，且其值要大于本代码所占用FLASH的大小+0X08000000)
+#define Modbus_Commands_Length 20
 
 typedef struct 
 {
@@ -94,7 +95,7 @@ typedef struct
 		HTTP_PARA http_para;
 		u16 modbus_qry_cmd_time;
 		u16 modbus_qry_post_time;
-		MODBUS_PARA modbus_qry_post_para[16];
+		MODBUS_PARA modbus_qry_post_para[Modbus_Commands_Length];
 		HTTP_PARA modbus_http_post_para;
 		
 		u16 modbus_qry_get_time;
@@ -108,7 +109,7 @@ typedef struct
 
 
 
-extern SAVE_DATA para_value;
+extern SAVE_DATA para_value;//保存的参数值
 
 
 extern void define_para_value(void);
