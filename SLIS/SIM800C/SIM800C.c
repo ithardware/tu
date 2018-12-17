@@ -986,7 +986,7 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len)
 		sim900a_send_data_ack("AT+HTTPPARA=\"CID\",1\r\n", 21, "OK", 100);
 	
     int xlen = sprintf((char*)http_buff, "AT+HTTPPARA=\"URL\",\"%s:%d%s\"\r\n", link.ip_addr, link.port, http_para.url);
-		DEBUG("url-%s",http_buff);
+		//DEBUG("url-%s",http_buff);
     if (sim900a_send_data_ack(http_buff, xlen, "OK", 100))
     {
         status_code = HTTP_STATUS_ERROR_HTTP_URL_SETTING;
@@ -1027,7 +1027,7 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len)
                 }
                 else
                 {
-										DEBUG("AT+HTTPACTION:%s",USART3_RX_BUF);
+										//DEBUG("AT+HTTPACTION:%s",USART3_RX_BUF);
                     if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 1000))
                     {
                         status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_TIMEOUT;//无法获取数据
@@ -1042,7 +1042,7 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len)
 														
 												}
                     }
-										DEBUG("+HTTPACTION:%s",USART3_RX_BUF);
+										//DEBUG("+HTTPACTION:%s",USART3_RX_BUF);
                 }
             }
         }
