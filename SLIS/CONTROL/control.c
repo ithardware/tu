@@ -126,7 +126,7 @@ void woke_mode_modbus_http_main(void)
 												int code = http_post(para_value.link1, para_value.modbus_http_post_para, modbus_http_post_buff, 1749);
 												DEBUG(",all:%d,this code:%d",all_post_count,code);
 										}
-										
+										/**
 										if(!para_value.link2.connect_type)
 										{
 												all_get_count++;
@@ -143,7 +143,7 @@ void woke_mode_modbus_http_main(void)
 														DEBUG("\r\n");
 												}
 												modbus_get_flog = 0;
-										}
+										}**/
 								}
 								else
 								{
