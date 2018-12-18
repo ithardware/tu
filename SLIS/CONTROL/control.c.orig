@@ -36,40 +36,28 @@ void woke_mode_at_main(void)
 //以13个字节做基本指令长度，10指令操作一个浮点数点位需要13个字节
 void modbus_http_get_send(u8 *data, u16 len)
 {
-		DEBUG("haha1\r\n");
-    unsigned int wait_modbus_get_stime = 0;
-    u16 i=0,x =0,lenx = 0;
+    u16 i=0,x =0;
+		DEBUG("\r\n get commands:");
+		for(i=0; i < len ; i++) {
+							DEBUG("%02x ",data[i]);
+						}
+						DEBUG("\r\n");
     u16 count = count = len/Setting_Modbus_Command_Length;;
-    /**
-	if((len%Setting_Modbus_Command_Length) == 0)
-    {
-        count = len/Setting_Modbus_Command_Length;
-    }
-	**/
-		DEBUG("count:%d\r\n",count);
+
     for(i=0; i<count; i++)
     {
-				lenx = 0;
         //如果单点位设置指令
         if(Setting_Modbus_Command_Type_Single == data[i*Setting_Modbus_Command_Length+1]) {
             usart_send_str(HOSTIF_USART, &data[i*Setting_Modbus_Command_Length], 8);
-					DEBUG("\r\n single command:");
-					for(x=i*Setting_Modbus_Command_Length; lenx < 8 ; x++,lenx++) {
-						DEBUG("%02x ",data[x]);
-          }
-					DEBUG("\r\n");
         }
         else if(Setting_Modbus_Command_Type_Double == data[i*Setting_Modbus_Command_Length+1])
         {
             usart_send_str(HOSTIF_USART, &data[i*Setting_Modbus_Command_Length], 13);
-						DEBUG("\r\n double command:");
-					for(x=i*Setting_Modbus_Command_Length; lenx < 13 ; x++,lenx++) {
-						DEBUG("%02x ",data[x]);
-          }
-					DEBUG("\r\n");
         }
         else {
-						DEBUG("\r\nno cmd\r\n");
+						#if 0
+					DEBUG("\r\nno cmd\r\n");
+					#endif
             continue;
         }
         delay_ms(200);
@@ -192,10 +180,10 @@ void woke_mode_modbus_http_main(void)
                                 modbus_get_flog = 1;//修改get操作标识，防止uart2收到的数据放入modbus_http_post_buff;
 
                                 u8 code = http_get(para_value.link2, para_value.modbus_http_get_para, para_value.modbus_qry_get_para.buff);
-                                DEBUG(",all:%d,this code:%d",all_get_count,code);
+                                //DEBUG(",all:%d,this code:%d",all_get_count,code);
                                 if(!code)
                                 {
-                                    DEBUG("\r\nhttp_get_rx_len:%d\r\n",http_get_rx_len);
+                                    //DEBUG("\r\nhttp_get_rx_len:%d\r\n",http_get_rx_len);
                                     modbus_http_get_send(http_get_buff, http_get_rx_len);
                                 } else
                                 {
@@ -205,7 +193,7 @@ void woke_mode_modbus_http_main(void)
                             }
                         }
 												close_gprs();
-                        DEBUG("\r\ninit gprs:%d success:%d\r\n",all_init_gprs_count,init_gprs_success_count);
+                        //DEBUG("\r\ninit gprs:%d success:%d\r\n",all_init_gprs_count,init_gprs_success_count);
                     }
                 }
                 else {
