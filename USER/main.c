@@ -73,11 +73,6 @@ int main(void)
     
     while(1) 
 		{
-		  
-			//这里只处理sim800c发送来的数据
-			//发送到sim800c的透传数据在 host接收函数中处理了
-			//host_receive_packet();
-			//SIM8XX_User_Receive();
 			
 			if(para_value.word_mode == WOKE_MODE_AT)
 			{
