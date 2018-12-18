@@ -8,7 +8,7 @@
 
 #define Setting_Modbus_Command_Length 13 //Modbus 设置命令的基本长度，1个命令需要满足13个字节
 #define Setting_Modbus_Command_Type_Single 0x06 //modbus单点位设置指令
-#define Setting_Modbus_Command_Type_Double 0x06 //modbus双点位设置指令
+#define Setting_Modbus_Command_Type_Double 0x10 //modbus双点位设置指令
 
 unsigned int post_action_send_modbus_commands_Index = 0;
 unsigned int get_send_modbus_command_working_flag = 0; //get方式正在发送modbus命令标示，该标示不为0时 post不能工作
