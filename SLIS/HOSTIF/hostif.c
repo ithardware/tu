@@ -13,7 +13,7 @@ u16 host_rx_len = 0;
 u8 host_tx_buff[HOST_TX_BUFF_LEN];
 
 u8 dtu_hw_version[] = "V1.2";
-u8 dtu_sw_version[] = "V2.1.5 modbus cmds 20 beta";
+u8 dtu_sw_version[] = "V2.1.6  reset 800c delay 15s,new get send method beta";
 
 
 APN_GATEWAT temp_apn_para;

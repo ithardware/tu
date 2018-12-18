@@ -25,11 +25,7 @@
 #define HTTP_STATUS_ERROR_SIM800C_DOWNLOAD_FAIL 12
 
 #define countof(a) (sizeof(a) / sizeof(*(a)))//计算数组内的成员个数
-//修改
-u8 gprs_bearer_closed = 1; //gprs承载是否关闭标示
-unsigned int open_gprs_cgatt_interval = 0;//重启sim800c计数器
-unsigned int open_gprs_bearer_success_count = 0;//打开ip承载成功次数
-unsigned int open_gprs_bearer_fail_count = 0;//打开ip承载失败次数
+
 
 
 unsigned int http_get_success_count = 0;//http get 请求成功次数
@@ -647,8 +643,9 @@ void reset_sim800c(){
 void reset_sim800c(){
 		sim900a_send_data_ack("AT+CFUN=0\r\n", 12, "OK", 1000);
 		sim900a_send_data_ack("AT+CFUN=1\r\n", 12, "OK", 1000);
+		
+		delay_ms(15000);
 		DEBUG("\r\nreset sim800c\r\n");
-		delay_ms(5000);
 }
 #endif
 
@@ -751,9 +748,7 @@ void close_http_service(){
 关闭释放sim800的数据连接
 **/
 void close_gprs(){
-	delay_ms(100);
 	sim900a_send_data_ack("AT+SAPBR=0,1\r\n", 14, "OK", 100);//关闭HTTP承载
-  gprs_bearer_closed = 1;
 }
 
 /**
@@ -812,7 +807,6 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
             }
             else
             {
-							DEBUG("content:%s\r\n",USART3_RX_BUF);
                 //获取服务器返回状态码
                 status_code = (USART3_RX_BUF[17] - 0x30) * 100 + (USART3_RX_BUF[18] - 0x30) * 10 + (USART3_RX_BUF[19] - 0x30);
                 if (200 == status_code)// 服务器返回错误状态码
@@ -859,8 +853,7 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
     }
     close_http_service();
 		if(status_code){
-				http_get_fail_count++;
-				
+				http_get_fail_count++;				
 		}
 		DEBUG("http get fail count %d,success count:%d", http_get_fail_count, http_get_success_count);
     return status_code;
@@ -1027,7 +1020,6 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len)
                 }
                 else
                 {
-										//DEBUG("AT+HTTPACTION:%s",USART3_RX_BUF);
                     if (sim900a_send_data_ack("", 0, "+HTTPACTION:", 1000))
                     {
                         status_code = HTTP_STATUS_ERROR_HTTP_REQUEST_TIMEOUT;//无法获取数据
@@ -1039,22 +1031,18 @@ int http_post(LINK_PARA link, HTTP_PARA http_para, u8* in_data, u16 len)
                         {
 														status_code = HTTP_STATUS_SUCCESS;//在成功请求之后，重置status_code
 														http_post_success_count++;
-														
 												}
                     }
-										//DEBUG("+HTTPACTION:%s",USART3_RX_BUF);
                 }
             }
         }
-
-
     }
 
     close_http_service();
 		if(status_code){
 				http_post_fail_count++;
 		}
-		DEBUG("http post fail count %d,success count:%d", http_post_fail_count, http_post_success_count);
+		DEBUG("\r\nhttp post fail count %d,success count:%d", http_post_fail_count, http_post_success_count);
     return status_code;
 
 		#endif
