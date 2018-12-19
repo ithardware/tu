@@ -10,7 +10,7 @@
 #define HOST_RX_BUFF_LEN              512
 #define HOST_TX_BUFF_LEN              512
 
-
+#define WOKE_MODE_CHECK 							 2
 #define WOKE_MODE_AT                   0
 #define WOKE_MODE_TS                   1
 

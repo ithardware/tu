@@ -78,6 +78,9 @@ int main(void)
 			{
 					woke_mode_at_main();
 			}
+			else if(para_value.word_mode == WOKE_MODE_CHECK){
+					check_cgatt();
+			}
 			else if(para_value.word_mode == WOKE_MODE_MODBUS_HTTP)
 			{
 					woke_mode_modbus_http_main();

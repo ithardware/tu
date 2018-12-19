@@ -18,5 +18,6 @@ extern unsigned int modbus_http_post_len;
 
 extern void woke_mode_at_main(void); 			
 extern void woke_mode_modbus_http_main(void);
+extern void check_cgatt(void);
 
 #endif

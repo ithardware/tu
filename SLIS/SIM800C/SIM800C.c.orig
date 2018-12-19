@@ -627,18 +627,18 @@ if (gprs_bearer_closed)
 return 0;**/
 //}
 
-//优化指令时间及函数执行结束延迟时间
-//将重启操作放入control中执行，执行时机更准确
-void reset_sim800c(void) {
-    sim900a_send_data_ack("AT+CFUN=0\r\n", 12, "OK", 500);
-    sim900a_send_data_ack("AT+CFUN=1\r\n", 12, "OK", 500);
-    delay_ms(15000);
+
+void reset_sim800c() {
+    sim900a_send_data_ack("AT+CFUN=0\r\n", 12, "OK", 1000);
+    sim900a_send_data_ack("AT+CFUN=1\r\n", 12, "OK", 1000);
+
+    delay_ms(20000);
     DEBUG("\r\nreset sim800c\r\n");
 }
 //init_gprs优化检测功能，将时间延迟缩短
 int init_gprs(void)
 {
-    u8 check_count = 15,status = 0;
+    u8 check_count = 10,status = 0;
 
     if(sim900a_send_data_ack("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n", 31, "\r\n", 100))
     {
@@ -650,9 +650,8 @@ int init_gprs(void)
     }
     sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 200);
     do {
-        status=sim900a_send_data_ack("AT+SAPBR=2,1\r\n", 14, "+SAPBR: 1,1", 100);
-        check_count--;
-				DEBUG("content:%s\r\n",USART3_RX_BUF);
+        status=sim900a_send_data_ack("AT+SAPBR=2,1\r\n", 14, "+SAPBR:1,1", 100);
+               check_count--;
     } while(status&check_count);
 
     if(status) {
