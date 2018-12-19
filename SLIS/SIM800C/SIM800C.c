@@ -25,13 +25,6 @@
 #define countof(a) (sizeof(a) / sizeof(*(a)))//计算数组内的成员个数
 
 
-
-//unsigned int http_get_success_count = 0;//http get 请求成功次数
-//unsigned int http_get_fail_count = 0;//http get 请求失败次数
-
-//unsigned int http_post_success_count = 0;//http post 请求成功次数
-//unsigned int http_post_fail_count = 0;//http post 请求失败次数
-
 u8 tcp_udp_rx_data_flog = 0;
 u8 first_tcp_udp_connect_flog = 0;
 
@@ -554,79 +547,6 @@ u8 off_line(void)
     return (u8)res;
 }
 
-/**
-初始化过程中根据是否关闭标识进行IP承载
-**/
-//修改
-/**
-int init_gprs(void)
-{
-    sim900a_send_data_ack("AT+CGATT?\r\n", 11, "+CGATT", 200);//检测GPRS是否上线
-
-				if(USART3_RX_BUF[10] == 0x31)//已附着gprs
-				{
-					DEBUG("\r\nload success\r\n");
-						//设置gprs数据连接信息
-						if (sim900a_send_data_ack("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n", 31, "\r\n", 100))
-						{
-								return 2;
-						}
-						if (sim900a_send_data_ack("AT+SAPBR=3,1,\"APN\",\"CMNET\"\r\n", 28, "\r\n", 100))
-						{
-								return 3;
-						}
-						if (gprs_bearer_closed)//如果 gprs承载被关闭，则重新启动承载
-						{
-								open_gprs_bearer_count ++;
-								if (sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100))
-								{
-										gprs_bearer_closed = 1;
-										DEBUG("\r\nSAPBR is open fail\r\n");
-										return 4;
-								}
-								open_gprs_bearer_count++;
-								DEBUG("\r\nSAPBR open success %d\r\n",open_gprs_bearer_count);
-								gprs_bearer_closed = 0;
-						}
-						return 0;
-				}
-				else
-				{
-						//重启sim800c，如果上次重启时间超过一分钟
-						if(time_diff_ms(open_gprs_cgatt_interval)>60000){
-								sim900a_send_data_ack("AT+CFUN=0\r\n", 12, "OK", 100);
-								sim900a_send_data_ack("AT+CFUN=1\r\n", 12, "OK", 100);
-								open_gprs_cgatt_interval = time_get_ms();
-								DEBUG("\r\nreset sim800c\r\n");
-						}
-						return 1;
-				}**/
-/**
-    gprs_bearer_closed = 1;
-			DEBUG("reline\r\n");
-    if (sim900a_send_data_ack("AT+CGATT=1\r\n", 12, "OK", 10000))
-    { //重新上线
-					gprs_bearer_closed = 1;
-        return 1;
-    }
-}
-if (gprs_bearer_closed)
-{//如果 gprs承载被关闭，则重新启动承载
- //设置gprs数据连接信息
-
-
-    if (sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 100))
-    {
-					gprs_bearer_closed = 1;
-        DEBUG("\r\nSAPBR err is %s", USART3_RX_BUF);
-        return 4;
-    }
-			DEBUG("\r\nSAPBR is %s", USART3_RX_BUF);
-    gprs_bearer_closed = 0;
-}
-return 0;**/
-//}
-
 //优化指令时间及函数执行结束延迟时间
 //将重启操作放入control中执行，执行时机更准确
 void reset_sim800c(void) {
@@ -662,38 +582,6 @@ int init_gprs(void)
 
 }
 
-#if 0
-/**
-初始化过程中总是开启IP承载
-**/
-int init_gprs(void)
-{
-
-    u8 flag = 5;
-    while(flag)
-    {
-        if(sim900a_send_data_ack("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"\r\n", 31, "\r\n", 100))
-        {
-            return 1;
-        }
-        if(sim900a_send_data_ack("AT+SAPBR=3,1,\"APN\",\"CMNET\"\r\n", 28, "\r\n", 100))
-        {
-            return 2;
-        }
-        if(sim900a_send_data_ack("AT+SAPBR=1,1\r\n", 14, "OK", 200)) {
-            reset_sim800c();
-            flag--;
-        } else {
-            return 0;
-        }
-        return 3;
-    }
-    //sim900a_send_data_ack("AT+SAPBR=2,1\r\n",14,"+SAPBR",100);
-    //sim900a_send_data_ack("AT+SAPBR=0,1\r\n", 14, "OK", 100);
-    return 0;
-}
-
-#endif
 void init_http_service() {
     u8 flag = 0;
     while(1) {

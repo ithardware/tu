@@ -16,6 +16,10 @@ unsigned int modbus_get_flog = 0;
 unsigned char modbus_http_post_buff[Post_Buffer_Length] = {0x00};
 unsigned int modbus_http_post_len = 0;
 
+
+/**
+gprs 附着测试代码
+**/
 void check_cgatt(void) {
     unsigned int work_interval = 0;
     unsigned int work_interval2 = 0;
@@ -64,7 +68,13 @@ void woke_mode_at_main(void)
     }
 }
 
-//以13个字节做基本指令长度，10指令操作一个浮点数点位需要13个字节
+/**
+以13个字节做基本指令长度
+0x10指令操作一个浮点数点位需要13个字节
+0x06指令操作一个整型数点位需要8个字节
+为消除0x10、0x06指令的区别，需要将0x06
+指令8个字节后补5个0
+**/
 void modbus_http_get_send(u8 *data, u16 len)
 {
     u16 i=0;
