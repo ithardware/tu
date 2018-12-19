@@ -715,7 +715,7 @@ int http_get(LINK_PARA link, HTTP_PARA http_para, u8* in_data)
     //if(status_code){
     //		http_get_fail_count++;
     //}
-    DEBUG("\r\nhttp get result %d", status_code);
+    //DEBUG("\r\nhttp get result %d", status_code);
     return status_code;
 }
 
