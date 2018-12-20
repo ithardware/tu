@@ -77,6 +77,10 @@ void woke_mode_at_main(void)
 **/
 void modbus_http_get_send(u8 *data, u16 len)
 {
+		//Ìí¼Ó³¤¶ÈÅÐ¶Ï
+		if(Setting_Modbus_Command_Length>len)
+			return;
+		
     u16 i=0;
     u16 count = count = len/Setting_Modbus_Command_Length;
 		u8 type = data[i*Setting_Modbus_Command_Length+1];
